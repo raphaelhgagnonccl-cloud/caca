@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Nova AI</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+body {
+  background:#0f1220;
+  color:white;
+  font-family: Arial, sans-serif;
+}
+#chat {
+  max-width:600px;
+  margin:40px auto;
+  background:#1b1f3a;
+  padding:15px;
+  border-radius:10px;
+}
+.msg { margin:10px 0; }
+.user { color:#4fc3f7; }
+.ai { color:#a5d6a7; }
+input, button {
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="chat">
+  <h2>🤖 Nova AI</h2>
+  <div id="messages"></div>
+
+  <input id="input" placeholder="Parle à l'IA">
+  <button onclick="send()">Envoyer</button>
+</div>
+
+<script>
+// 🔴 REMPLACE CES VALEURS PAR CELLES DE FIREBASE
+const firebaseConfig = {
+  apiKey: "TON_API_KEY",
+  authDomain: "TON_PROJET.firebaseapp.com",
+  projectId: "TON_PROJECT_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ID unique pour chaque utilisateur
+const chatId = Date.now().toString();
+
+// Envoyer message utilisateur
+function send() {
+  const text = input.value;
+  if (!text) return;
+
+  messages.innerHTML += `<div class="msg user">👤 ${text}</div>`;
+  input.value = "";
+
+  db.collection("chats")
+    .doc(chatId)
+    .collection("messages")
+    .add({
+      from: "user",
+      text: text,
+      time: Date.now()
+    });
+}
+
+// Recevoir réponses (toi)
+db.collection("chats")
+  .doc(chatId)
+  .collection("messages")
+  .orderBy("time")
+  .onSnapshot(snap => {
+    messages.innerHTML = "";
+    snap.forEach(doc => {
+      const m = doc.data();
+      messages.innerHTML += `
+        <div class="msg ${m.from}">
+          ${m.from === "user" ? "👤" : "🤖"} ${m.text}
+        </div>`;
+    });
+  });
+</script>
+
+</body>
+</html>
