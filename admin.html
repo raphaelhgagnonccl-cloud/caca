@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin IA</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<h2>🛠️ Admin – Messages</h2>
+<div id="msgs"></div>
+<input id="reply" placeholder="Réponse IA">
+<button onclick="sendReply()">Envoyer</button>
+
+<script>
+const firebaseConfig = {
+  apiKey: "TON_API_KEY",
+  authDomain: "TON_PROJET.firebaseapp.com",
+  projectId: "TON_PROJECT_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let currentChat = null;
+
+db.collection("chats").onSnapshot(snap=>{
+  snap.forEach(doc=>{
+    currentChat = doc.id;
+    listenMessages();
+  });
+});
+
+function listenMessages(){
+  db.collection("chats").doc(currentChat).collection("messages")
+  .orderBy("time")
+  .onSnapshot(snap=>{
+    msgs.innerHTML="";
+    snap.forEach(d=>{
+      const m=d.data();
+      msgs.innerHTML+=`<p><b>${m.from}:</b> ${m.text}</p>`;
+    });
+  });
+}
+
+function sendReply(){
+  const text = reply.value;
+  if(!text) return;
+  db.collection("chats").doc(currentChat).collection("messages").add({
+    from:"ai",
+    text:text,
+    time:Date.now()
+  });
+  reply.value="";
+}
+</script>
+</body>
+</html>
