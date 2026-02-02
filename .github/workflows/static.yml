@@ -1,0 +1,120 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload entire repository
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Mini Minecraft iPad</title>
+<style>
+body {
+  margin: 0;
+  background: #87CEEB;
+}
+canvas {
+  display: block;
+  margin: auto;
+  background: #87CEEB;
+  touch-action: none;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// Taille écran iPad
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const BLOCK = 40;
+const COLS = Math.floor(canvas.width / BLOCK);
+const ROWS = Math.floor(canvas.height / BLOCK);
+
+// Monde
+let world = [];
+for (let y = 0; y < ROWS; y++) {
+  world[y] = [];
+  for (let x = 0; x < COLS; x++) {
+    world[y][x] = (y > ROWS / 2) ? 1 : 0;
+  }
+}
+
+// Dessin
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (world[y][x] === 1) {
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(x * BLOCK, y * BLOCK, BLOCK, BLOCK);
+      }
+    }
+  }
+}
+
+// Tactile iPad
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((touch.clientX - rect.left) / BLOCK);
+  const y = Math.floor((touch.clientY - rect.top) / BLOCK);
+
+  if (world[y] && world[y][x] !== undefined) {
+    world[y][x] = world[y][x] === 1 ? 0 : 1;
+    draw();
+  }
+});
+
+// Sécurité
+draw();
+</script>
+
+</body>
+</html>
